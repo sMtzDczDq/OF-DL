@@ -38,7 +38,7 @@ public class DownloadHelper : IDownloadHelper
 
     #region common
     /// <summary>
-    /// 
+    ///
     /// </summary>
     /// <param name="path"></param>
     /// <param name="url"></param>
@@ -392,7 +392,7 @@ public class DownloadHelper : IDownloadHelper
             if (fullPathWithTheServerFileName != fullPathWithTheNewFileName)
             {
                 finalPath = fullPathWithTheNewFileName;
-                //rename. 
+                //rename.
                 try
                 {
                     File.Move(fullPathWithTheServerFileName, fullPathWithTheNewFileName);
@@ -421,7 +421,7 @@ public class DownloadHelper : IDownloadHelper
         }
         // Handle the case where the file has been downloaded in the past with a custom filename.
         //but it has downloaded outsite of this application so it doesn't exist in the database
-        // this is a bit improbable but we should check for that. 
+        // this is a bit improbable but we should check for that.
         else if (File.Exists(fullPathWithTheNewFileName))
         {
             fileSizeInBytes = GetLocalFileSize(fullPathWithTheNewFileName);
@@ -436,7 +436,7 @@ public class DownloadHelper : IDownloadHelper
             }
             status = false;
         }
-        else //file doesn't exist and we should download it. 
+        else //file doesn't exist and we should download it.
         {
             lastModified = await DownloadFile(url, fullPathWithTheNewFileName, task, config, showScrapeSize);
             fileSizeInBytes = GetLocalFileSize(fullPathWithTheNewFileName);
@@ -444,7 +444,7 @@ public class DownloadHelper : IDownloadHelper
         }
 
         //finaly check which filename we should use. Custom or the server one.
-        //if a custom is used, then the servefilename will be different from the resolved filename. 
+        //if a custom is used, then the servefilename will be different from the resolved filename.
         string finalName = serverFilename == resolvedFilename ? serverFilename : resolvedFilename;
         await m_DBHelper.UpdateMedia(folder, media_id, folder + path, finalName + extension, fileSizeInBytes, true, lastModified);
         return status;
@@ -579,7 +579,7 @@ public class DownloadHelper : IDownloadHelper
 
     #region drm common
 
-    private static async Task<bool> DownloadDrmMedia(string ffmpegpath, string user_agent, string policy, string signature, string kvp, string sess, string url, string decryptionKey, string folder, DateTime lastModified, long media_id, ProgressTask task, string customFileName, string filename, string path, bool showScrapeSize)
+    private static async Task<bool> DownloadDrmMedia(string user_agent, string policy, string signature, string kvp, string sess, string url, string decryptionKey, string folder, DateTime lastModified, long media_id, ProgressTask task, string customFileName, string filename, string path, bool showScrapeSize, Config config)
     {
         int pos1 = decryptionKey.IndexOf(':');
         string decKey = "";
@@ -592,9 +592,12 @@ public class DownloadHelper : IDownloadHelper
 
         ProcessStartInfo ffmpegStartInfo = new()
         {
-            FileName = ffmpegpath,
+            FileName = config.FFmpegPath,
             Arguments = $"-cenc_decryption_key {decKey} -headers \"Cookie:CloudFront-Policy={policy}; CloudFront-Signature={signature}; CloudFront-Key-Pair-Id={kvp}; {sess}\r\nOrigin: https://onlyfans.com\r\nReferer: https://onlyfans.com\r\nUser-Agent: {user_agent}\r\n\r\n\" -i \"{url}\" -codec copy \"{tempFilename}\"",
-            CreateNoWindow = true
+            CreateNoWindow = true,
+            UseShellExecute = false,
+            RedirectStandardOutput = false,
+            RedirectStandardError = true
         };
 
         Process ffmpegProcess = new()
@@ -602,7 +605,14 @@ public class DownloadHelper : IDownloadHelper
             StartInfo = ffmpegStartInfo
         };
         ffmpegProcess.Start();
+        var ffmpegErrors = ffmpegProcess.StandardError.ReadToEnd();
         ffmpegProcess.WaitForExit();
+
+        if (ffmpegProcess.ExitCode != 0)
+        {
+            Console.WriteLine("\nFFmpeg failed to download {0}", url);
+            Log.Error(ffmpegErrors);
+        }
 
         if (File.Exists(tempFilename))
         {
@@ -863,7 +873,7 @@ public class DownloadHelper : IDownloadHelper
                     }
                     File.SetLastWriteTime(destinationPath, response.Content.Headers.LastModified?.LocalDateTime ?? DateTime.Now);
                 }
-                
+
             }
         }
         catch (Exception ex)
@@ -879,7 +889,7 @@ public class DownloadHelper : IDownloadHelper
     }
 
     #region drm posts
-    public async Task<bool> DownloadMessageDRMVideo(string ffmpegpath, string user_agent, string policy, string signature, string kvp, string sess, string url, string decryptionKey, string folder, DateTime lastModified, long media_id, ProgressTask task, string filenameFormat, Messages.List messageInfo, Messages.Medium messageMedia, Messages.FromUser fromUser, Dictionary<string, int> users, Config config, bool showScrapeSize)
+    public async Task<bool> DownloadMessageDRMVideo(string user_agent, string policy, string signature, string kvp, string sess, string url, string decryptionKey, string folder, DateTime lastModified, long media_id, ProgressTask task, string filenameFormat, Messages.List messageInfo, Messages.Medium messageMedia, Messages.FromUser fromUser, Dictionary<string, int> users, Config config, bool showScrapeSize)
     {
         try
         {
@@ -918,7 +928,7 @@ public class DownloadHelper : IDownloadHelper
             {
                 if (!string.IsNullOrEmpty(customFileName) ? !File.Exists(folder + path + "/" + customFileName + ".mp4") : !File.Exists(folder + path + "/" + filename + "_source.mp4"))
                 {
-                    return await DownloadDrmMedia(ffmpegpath, user_agent, policy, signature, kvp, sess, url, decryptionKey, folder, lastModified, media_id, task, customFileName, filename, path, showScrapeSize);
+                    return await DownloadDrmMedia(user_agent, policy, signature, kvp, sess, url, decryptionKey, folder, lastModified, media_id, task, customFileName, filename, path, showScrapeSize, config);
                 }
                 else
                 {
@@ -963,7 +973,7 @@ public class DownloadHelper : IDownloadHelper
     }
 
 
-    public async Task<bool> DownloadPurchasedMessageDRMVideo(string ffmpegpath, string user_agent, string policy, string signature, string kvp, string sess, string url, string decryptionKey, string folder, DateTime lastModified, long media_id, ProgressTask task, string filenameFormat, Purchased.List messageInfo, Purchased.Medium messageMedia, Purchased.FromUser fromUser, Dictionary<string, int> users, Config config, bool showScrapeSize)
+    public async Task<bool> DownloadPurchasedMessageDRMVideo(string user_agent, string policy, string signature, string kvp, string sess, string url, string decryptionKey, string folder, DateTime lastModified, long media_id, ProgressTask task, string filenameFormat, Purchased.List messageInfo, Purchased.Medium messageMedia, Purchased.FromUser fromUser, Dictionary<string, int> users, Config config, bool showScrapeSize)
     {
         try
         {
@@ -1001,7 +1011,7 @@ public class DownloadHelper : IDownloadHelper
             {
                 if (!string.IsNullOrEmpty(customFileName) ? !File.Exists(folder + path + "/" + customFileName + ".mp4") : !File.Exists(folder + path + "/" + filename + "_source.mp4"))
                 {
-                    return await DownloadDrmMedia(ffmpegpath, user_agent, policy, signature, kvp, sess, url, decryptionKey, folder, lastModified, media_id, task, customFileName, filename, path, showScrapeSize);
+                    return await DownloadDrmMedia(user_agent, policy, signature, kvp, sess, url, decryptionKey, folder, lastModified, media_id, task, customFileName, filename, path, showScrapeSize, config);
                 }
                 else
                 {
@@ -1046,7 +1056,7 @@ public class DownloadHelper : IDownloadHelper
     }
 
 
-    public async Task<bool> DownloadPostDRMVideo(string ffmpegpath, string user_agent, string policy, string signature, string kvp, string sess, string url, string decryptionKey, string folder, DateTime lastModified, long media_id, ProgressTask task, string filenameFormat, Post.List postInfo, Post.Medium postMedia, Post.Author author, Dictionary<string, int> users, Config config, bool showScrapeSize)
+    public async Task<bool> DownloadPostDRMVideo(string user_agent, string policy, string signature, string kvp, string sess, string url, string decryptionKey, string folder, DateTime lastModified, long media_id, ProgressTask task, string filenameFormat, Post.List postInfo, Post.Medium postMedia, Post.Author author, Dictionary<string, int> users, Config config, bool showScrapeSize)
     {
         try
         {
@@ -1084,7 +1094,7 @@ public class DownloadHelper : IDownloadHelper
             {
                 if (!string.IsNullOrEmpty(customFileName) ? !File.Exists(folder + path + "/" + customFileName + ".mp4") : !File.Exists(folder + path + "/" + filename + "_source.mp4"))
                 {
-                    return await DownloadDrmMedia(ffmpegpath, user_agent, policy, signature, kvp, sess, url, decryptionKey, folder, lastModified, media_id, task, customFileName, filename, path, showScrapeSize);
+                    return await DownloadDrmMedia(user_agent, policy, signature, kvp, sess, url, decryptionKey, folder, lastModified, media_id, task, customFileName, filename, path, showScrapeSize, config);
                 }
                 else
                 {
@@ -1127,7 +1137,7 @@ public class DownloadHelper : IDownloadHelper
         }
         return false;
     }
-    public async Task<bool> DownloadPostDRMVideo(string ffmpegpath, string user_agent, string policy, string signature, string kvp, string sess, string url, string decryptionKey, string folder, DateTime lastModified, long media_id, ProgressTask task, string filenameFormat, SinglePost postInfo, SinglePost.Medium postMedia, SinglePost.Author author, Dictionary<string, int> users, Config config, bool showScrapeSize)
+    public async Task<bool> DownloadPostDRMVideo(string user_agent, string policy, string signature, string kvp, string sess, string url, string decryptionKey, string folder, DateTime lastModified, long media_id, ProgressTask task, string filenameFormat, SinglePost postInfo, SinglePost.Medium postMedia, SinglePost.Author author, Dictionary<string, int> users, Config config, bool showScrapeSize)
     {
         try
         {
@@ -1165,7 +1175,7 @@ public class DownloadHelper : IDownloadHelper
             {
                 if (!string.IsNullOrEmpty(customFileName) ? !File.Exists(folder + path + "/" + customFileName + ".mp4") : !File.Exists(folder + path + "/" + filename + "_source.mp4"))
                 {
-                    return await DownloadDrmMedia(ffmpegpath, user_agent, policy, signature, kvp, sess, url, decryptionKey, folder, lastModified, media_id, task, customFileName, filename, path, showScrapeSize);
+                    return await DownloadDrmMedia(user_agent, policy, signature, kvp, sess, url, decryptionKey, folder, lastModified, media_id, task, customFileName, filename, path, showScrapeSize, config);
                 }
                 else
                 {
@@ -1208,7 +1218,7 @@ public class DownloadHelper : IDownloadHelper
         }
         return false;
     }
-    public async Task<bool> DownloadStreamsDRMVideo(string ffmpegpath, string user_agent, string policy, string signature, string kvp, string sess, string url, string decryptionKey, string folder, DateTime lastModified, long media_id, ProgressTask task, string filenameFormat, Streams.List streamInfo, Streams.Medium streamMedia, Streams.Author author, Dictionary<string, int> users, Config config, bool showScrapeSize)
+    public async Task<bool> DownloadStreamsDRMVideo(string user_agent, string policy, string signature, string kvp, string sess, string url, string decryptionKey, string folder, DateTime lastModified, long media_id, ProgressTask task, string filenameFormat, Streams.List streamInfo, Streams.Medium streamMedia, Streams.Author author, Dictionary<string, int> users, Config config, bool showScrapeSize)
     {
         try
         {
@@ -1246,7 +1256,7 @@ public class DownloadHelper : IDownloadHelper
             {
                 if (!string.IsNullOrEmpty(customFileName) ? !File.Exists(folder + path + "/" + customFileName + ".mp4") : !File.Exists(folder + path + "/" + filename + "_source.mp4"))
                 {
-                    return await DownloadDrmMedia(ffmpegpath, user_agent, policy, signature, kvp, sess, url, decryptionKey, folder, lastModified, media_id, task, customFileName, filename, path, showScrapeSize);
+                    return await DownloadDrmMedia(user_agent, policy, signature, kvp, sess, url, decryptionKey, folder, lastModified, media_id, task, customFileName, filename, path, showScrapeSize, config);
                 }
                 else
                 {
@@ -1290,7 +1300,7 @@ public class DownloadHelper : IDownloadHelper
         return false;
     }
 
-    public async Task<bool> DownloadPurchasedPostDRMVideo(string ffmpegpath, string user_agent, string policy, string signature, string kvp, string sess, string url, string decryptionKey, string folder, DateTime lastModified, long media_id, ProgressTask task, string filenameFormat, Purchased.List postInfo, Purchased.Medium postMedia, Purchased.FromUser fromUser, Dictionary<string, int> users, Config config, bool showScrapeSize)
+    public async Task<bool> DownloadPurchasedPostDRMVideo(string user_agent, string policy, string signature, string kvp, string sess, string url, string decryptionKey, string folder, DateTime lastModified, long media_id, ProgressTask task, string filenameFormat, Purchased.List postInfo, Purchased.Medium postMedia, Purchased.FromUser fromUser, Dictionary<string, int> users, Config config, bool showScrapeSize)
     {
         try
         {
@@ -1329,7 +1339,7 @@ public class DownloadHelper : IDownloadHelper
             {
                 if (!string.IsNullOrEmpty(customFileName) ? !File.Exists(folder + path + "/" + customFileName + ".mp4") : !File.Exists(folder + path + "/" + filename + "_source.mp4"))
                 {
-                    return await DownloadDrmMedia(ffmpegpath, user_agent, policy, signature, kvp, sess, url, decryptionKey, folder, lastModified, media_id, task, customFileName, filename, path, showScrapeSize);
+                    return await DownloadDrmMedia(user_agent, policy, signature, kvp, sess, url, decryptionKey, folder, lastModified, media_id, task, customFileName, filename, path, showScrapeSize, config);
                 }
                 else
                 {
@@ -1374,7 +1384,7 @@ public class DownloadHelper : IDownloadHelper
     }
 
 
-    public async Task<bool> DownloadArchivedPostDRMVideo(string ffmpegpath, string user_agent, string policy, string signature, string kvp, string sess, string url, string decryptionKey, string folder, DateTime lastModified, long media_id, ProgressTask task, string filenameFormat, Archived.List postInfo, Archived.Medium postMedia, Archived.Author author, Dictionary<string, int> users, Config config, bool showScrapeSize)
+    public async Task<bool> DownloadArchivedPostDRMVideo(string user_agent, string policy, string signature, string kvp, string sess, string url, string decryptionKey, string folder, DateTime lastModified, long media_id, ProgressTask task, string filenameFormat, Archived.List postInfo, Archived.Medium postMedia, Archived.Author author, Dictionary<string, int> users, Config config, bool showScrapeSize)
     {
         try
         {
@@ -1404,7 +1414,7 @@ public class DownloadHelper : IDownloadHelper
             {
                 if (!string.IsNullOrEmpty(customFileName) ? !File.Exists(folder + path + "/" + customFileName + ".mp4") : !File.Exists(folder + path + "/" + filename + "_source.mp4"))
                 {
-                    return await DownloadDrmMedia(ffmpegpath, user_agent, policy, signature, kvp, sess, url, decryptionKey, folder, lastModified, media_id, task, customFileName, filename, path, showScrapeSize);
+                    return await DownloadDrmMedia(user_agent, policy, signature, kvp, sess, url, decryptionKey, folder, lastModified, media_id, task, customFileName, filename, path, showScrapeSize, config);
                 }
                 else
                 {
