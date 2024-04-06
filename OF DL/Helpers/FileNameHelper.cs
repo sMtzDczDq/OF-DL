@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Web;
 
 namespace OF_DL.Helpers
 {
@@ -131,9 +132,10 @@ namespace OF_DL.Helpers
                         {
                             Regex regex = new Regex("<[^>]+>|\"");
                             var str = propertyValue.ToString();
+                            str = HttpUtility.HtmlDecode(str);
                             str = regex.Replace(str, String.Empty);
                             if (str.Length > 100) // todo: add length limit to config
-                                str = str.Substring(0, 100);
+                                str = str.Substring(0, 100).TrimEnd();
                             values.Add(propertyName, str);
                         }
                     }
