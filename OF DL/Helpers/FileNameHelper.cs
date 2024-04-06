@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace OF_DL.Helpers
@@ -128,7 +129,9 @@ namespace OF_DL.Helpers
                         object propertyValue = property.GetValue(obj1);
                         if (propertyValue != null)
                         {
+                            Regex regex = new Regex("<[^>]+>|\"");
                             var str = propertyValue.ToString();
+                            str = regex.Replace(str, String.Empty);
                             if (str.Length > 100) // todo: add length limit to config
                                 str = str.Substring(0, 100);
                             values.Add(propertyName, str);
