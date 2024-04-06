@@ -16,7 +16,6 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Xml.Linq;
 using WidevineClient.Widevine;
-using static Org.BouncyCastle.Math.EC.ECCurve;
 using static WidevineClient.HttpUtil;
 
 namespace OF_DL.Helpers;
@@ -317,7 +316,7 @@ public class APIHelper : IAPIHelper
             { "format", "infinite"}
         };
 
-        return await GetAllSubscriptions(getParams, endpoint, auth); 
+        return await GetAllSubscriptions(getParams, endpoint, auth);
     }
 
 
@@ -462,7 +461,7 @@ public class APIHelper : IAPIHelper
 
             switch (mediatype)
             {
-                
+
                 case MediaType.Stories:
                     getParams = new Dictionary<string, string>
                     {
@@ -482,12 +481,12 @@ public class APIHelper : IAPIHelper
 
             var body = await BuildHeaderAndExecuteRequests(getParams, endpoint, auth, new HttpClient());
 
-            
+
             if (mediatype == MediaType.Stories)
             {
                 var stories = JsonConvert.DeserializeObject<List<Stories>>(body, m_JsonSerializerSettings) ?? new List<Stories>();
                 stories = stories.OrderByDescending(x => x.createdAt).ToList();
-                    
+
                 foreach (Stories story in stories)
                 {
                     if (story.createdAt != null)
@@ -534,7 +533,7 @@ public class APIHelper : IAPIHelper
             {
                 List<string> highlight_ids = new();
                 var highlights = JsonConvert.DeserializeObject<Highlights>(body, m_JsonSerializerSettings) ?? new Highlights();
-                    
+
                 if (highlights.hasMore)
                 {
                     offset += 5;
@@ -617,7 +616,7 @@ public class APIHelper : IAPIHelper
                     }
                 }
             }
-            
+
             return return_urls;
         }
         catch (Exception ex)
@@ -688,7 +687,7 @@ public class APIHelper : IAPIHelper
                             }
                         }
                     }
-                    else if(purchase.preview != null)
+                    else if (purchase.preview != null)
                     {
                         for (int i = 0; i < purchase.preview.Count; i++)
                         {
@@ -706,7 +705,7 @@ public class APIHelper : IAPIHelper
                         {
                             paid_post_ids.Add(medium.id);
                         }
-                        
+
                         if (medium.type == "photo" && !config.DownloadImages)
                         {
                             continue;
@@ -728,7 +727,7 @@ public class APIHelper : IAPIHelper
                             bool has = previewids.Any(cus => cus.Equals(medium.id));
                             if (!has && medium.canView && medium.source != null && medium.source.source != null && !medium.source.source.Contains("upload"))
                             {
-                                
+
                                 if (!paidPostCollection.PaidPosts.ContainsKey(medium.id))
                                 {
                                     await m_DBHelper.AddMedia(folder, medium.id, purchase.id, medium.source.source, null, null, null, "Posts", medium.type == "photo" ? "Images" : (medium.type == "video" || medium.type == "gif" ? "Videos" : (medium.type == "audio" ? "Audios" : null)), previewids.Contains(medium.id) ? true : false, false, null);
@@ -738,7 +737,7 @@ public class APIHelper : IAPIHelper
                             }
                             else if (!has && medium.canView && medium.files != null && medium.files.drm != null)
                             {
-                                
+
                                 if (!paidPostCollection.PaidPosts.ContainsKey(medium.id))
                                 {
                                     await m_DBHelper.AddMedia(folder, medium.id, purchase.id, medium.files.drm.manifest.dash, null, null, null, "Posts", medium.type == "photo" ? "Images" : (medium.type == "video" || medium.type == "gif" ? "Videos" : (medium.type == "audio" ? "Audios" : null)), previewids.Contains(medium.id) ? true : false, false, null);
@@ -811,10 +810,10 @@ public class APIHelper : IAPIHelper
                 downloadDateSelection = config.DownloadDateSelection;
                 downloadAsOf = config.CustomDate;
             }
-            else if(config.DownloadPostsIncrementally)
+            else if (config.DownloadPostsIncrementally)
             {
                 var mostRecentPostDate = await m_DBHelper.GetMostRecentPostDate(folder);
-                if(mostRecentPostDate.HasValue)
+                if (mostRecentPostDate.HasValue)
                 {
                     downloadDateSelection = Enumerations.DownloadDateSelection.after;
                     downloadAsOf = mostRecentPostDate.Value.AddMinutes(-5); // Back track a little for a margin of error
@@ -839,7 +838,7 @@ public class APIHelper : IAPIHelper
                 while (true)
                 {
                     Post newposts = new();
-                    
+
                     var loopbody = await BuildHeaderAndExecuteRequests(getParams, endpoint, auth, GetHttpClient(config));
                     newposts = JsonConvert.DeserializeObject<Post>(loopbody, m_JsonSerializerSettings);
 
@@ -860,7 +859,7 @@ public class APIHelper : IAPIHelper
             {
                 if (config.SkipAds)
                 {
-                    if(post.rawText != null && (post.rawText.Contains("#ad") || post.rawText.Contains("/trial/")))
+                    if (post.rawText != null && (post.rawText.Contains("#ad") || post.rawText.Contains("/trial/")))
                     {
                         continue;
                     }
@@ -909,7 +908,7 @@ public class APIHelper : IAPIHelper
                         if (medium.canView && medium.files?.drm == null)
                         {
                             bool has = paid_post_ids.Any(cus => cus.Equals(medium.id));
-                            if(medium.source.source != null)
+                            if (medium.source.source != null)
                             {
                                 if (!has && !medium.source.source.Contains("upload"))
                                 {
@@ -921,7 +920,7 @@ public class APIHelper : IAPIHelper
                                     }
                                 }
                             }
-                            else if(medium.preview != null && medium.source.source == null)
+                            else if (medium.preview != null && medium.source.source == null)
                             {
                                 if (!has && !medium.preview.Contains("upload"))
                                 {
@@ -980,7 +979,7 @@ public class APIHelper : IAPIHelper
             var body = await BuildHeaderAndExecuteRequests(getParams, endpoint, auth, new HttpClient());
             singlePost = JsonConvert.DeserializeObject<SinglePost>(body, m_JsonSerializerSettings);
 
-            if(singlePost != null)
+            if (singlePost != null)
             {
                 List<long> postPreviewIds = new();
                 if (singlePost.preview != null && singlePost.preview.Count > 0)
@@ -1020,7 +1019,7 @@ public class APIHelper : IAPIHelper
                         }
                         if (medium.canView && medium.files?.drm == null)
                         {
-                            if(medium.source.source != null)
+                            if (medium.source.source != null)
                             {
                                 if (!medium.source.source.Contains("upload"))
                                 {
@@ -1032,7 +1031,7 @@ public class APIHelper : IAPIHelper
                                     }
                                 }
                             }
-                            else if(medium.preview != null && medium.source.source == null)
+                            else if (medium.preview != null && medium.source.source == null)
                             {
                                 if (!medium.preview.Contains("upload"))
                                 {
@@ -1092,7 +1091,7 @@ public class APIHelper : IAPIHelper
             };
 
             Enumerations.DownloadDateSelection downloadDateSelection = Enumerations.DownloadDateSelection.before;
-            if(config.DownloadOnlySpecificDates && config.CustomDate.HasValue)
+            if (config.DownloadOnlySpecificDates && config.CustomDate.HasValue)
             {
                 downloadDateSelection = config.DownloadDateSelection;
             }
@@ -1461,7 +1460,7 @@ public class APIHelper : IAPIHelper
                         }
                     }
                 }
-                else if(messagePreviewIds.Count > 0)
+                else if (messagePreviewIds.Count > 0)
                 {
                     foreach (Messages.Medium medium in list.media)
                     {
@@ -1584,7 +1583,7 @@ public class APIHelper : IAPIHelper
                 }
             }
 
-            if(paidMessages.list != null && paidMessages.list.Count > 0)
+            if (paidMessages.list != null && paidMessages.list.Count > 0)
             {
                 foreach (Purchased.List purchase in paidMessages.list.Where(p => p.responseType == "message").OrderByDescending(p => p.postedAt ?? p.createdAt))
                 {
@@ -1757,7 +1756,7 @@ public class APIHelper : IAPIHelper
         try
         {
             string pssh = null;
-            
+
             HttpClient client = new();
             HttpRequestMessage request = new(HttpMethod.Get, mpdUrl);
             request.Headers.Add("user-agent", auth.USER_AGENT);
@@ -1796,7 +1795,7 @@ public class APIHelper : IAPIHelper
         try
         {
             DateTime lastmodified;
-            
+
             HttpClient client = new();
             HttpRequestMessage request = new(HttpMethod.Get, mpdUrl);
             request.Headers.Add("user-agent", auth.USER_AGENT);

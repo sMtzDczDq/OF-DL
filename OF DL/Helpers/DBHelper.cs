@@ -1,10 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using OF_DL.Enumurations;
-using System.IO;
 using Microsoft.Data.Sqlite;
 using Serilog;
 
@@ -410,7 +403,7 @@ namespace OF_DL.Helpers
 		                    WHERE m.downloaded = 0 
 	                      )", connection);
                 var scalarValue = await cmd.ExecuteScalarAsync();
-                if(scalarValue != null && scalarValue != DBNull.Value)
+                if (scalarValue != null && scalarValue != DBNull.Value)
                 {
                     mostRecentDate = Convert.ToDateTime(scalarValue);
                 }

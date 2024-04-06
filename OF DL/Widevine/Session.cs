@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace WidevineClient.Widevine
+﻿namespace WidevineClient.Widevine
 {
     class Session
     {

@@ -1,11 +1,6 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using OF_DL.Enumerations;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace OF_DL.Entities
 {

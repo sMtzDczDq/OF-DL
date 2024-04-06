@@ -5,9 +5,6 @@ using Org.BouncyCastle.Crypto.Engines;
 using Org.BouncyCastle.Crypto.Signers;
 using Org.BouncyCastle.OpenSsl;
 using ProtoBuf;
-using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Text;
 
 namespace WidevineClient.Widevine

@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
+﻿using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 
 namespace WidevineClient.Widevine
@@ -20,7 +17,8 @@ namespace WidevineClient.Widevine
 
         [NotMapped]
         [JsonPropertyName("permissions")]
-        public List<string> Permissions {
+        public List<string> Permissions
+        {
             get
             {
                 return PermissionsString.Split(",").ToList();

@@ -1,10 +1,5 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using System.Web;
 
 namespace OF_DL.Helpers
@@ -25,25 +20,25 @@ namespace OF_DL.Helpers
                 {
                     object drmProperty = null;
                     object fileProperty = GetNestedPropertyValue(obj2, "files");
-                    if(fileProperty != null)
+                    if (fileProperty != null)
                     {
                         drmProperty = GetNestedPropertyValue(obj2, "files.drm");
                     }
-                     
-                    if(fileProperty != null && drmProperty != null && propertyName == "mediaCreatedAt")
+
+                    if (fileProperty != null && drmProperty != null && propertyName == "mediaCreatedAt")
                     {
                         object mpdurl = GetNestedPropertyValue(obj2, "files.drm.manifest.dash");
                         object policy = GetNestedPropertyValue(obj2, "files.drm.signature.dash.CloudFrontPolicy");
                         object signature = GetNestedPropertyValue(obj2, "files.drm.signature.dash.CloudFrontSignature");
                         object kvp = GetNestedPropertyValue(obj2, "files.drm.signature.dash.CloudFrontKeyPairId");
-                        DateTime lastModified = await DownloadHelper.GetDRMVideoLastModified(string.Join(",", mpdurl, policy, signature, kvp) ,Program.Auth);
+                        DateTime lastModified = await DownloadHelper.GetDRMVideoLastModified(string.Join(",", mpdurl, policy, signature, kvp), Program.Auth);
                         values.Add(propertyName, lastModified.ToString("yyyy-MM-dd"));
                         continue;
                     }
-                    else if((fileProperty == null || drmProperty == null) && propertyName == "mediaCreatedAt")
+                    else if ((fileProperty == null || drmProperty == null) && propertyName == "mediaCreatedAt")
                     {
                         object source = GetNestedPropertyValue(obj2, "source.source");
-                        if(source != null)
+                        if (source != null)
                         {
                             DateTime lastModified = await DownloadHelper.GetMediaLastModified(source.ToString());
                             values.Add(propertyName, lastModified.ToString("yyyy-MM-dd"));
@@ -52,14 +47,14 @@ namespace OF_DL.Helpers
                         else
                         {
                             object preview = GetNestedPropertyValue(obj2, "preview");
-                            if(preview != null)
+                            if (preview != null)
                             {
                                 DateTime lastModified = await DownloadHelper.GetMediaLastModified(preview.ToString());
                                 values.Add(propertyName, lastModified.ToString("yyyy-MM-dd"));
                                 continue;
                             }
                         }
-                        
+
                     }
                     PropertyInfo? property = Array.Find(properties2, p => p.Name.Equals(propertyName.Replace("media", ""), StringComparison.OrdinalIgnoreCase));
                     if (property != null)
@@ -89,10 +84,10 @@ namespace OF_DL.Helpers
                             Type sourceType = propertyValue.GetType();
                             PropertyInfo[] sourceProperties = sourceType.GetProperties();
                             PropertyInfo sourceProperty = Array.Find(sourceProperties, p => p.Name.Equals("source", StringComparison.OrdinalIgnoreCase));
-                            if(sourceProperty != null)
+                            if (sourceProperty != null)
                             {
                                 object sourcePropertyValue = sourceProperty.GetValue(propertyValue);
-                                if(sourcePropertyValue != null)
+                                if (sourcePropertyValue != null)
                                 {
                                     Uri uri = new(sourcePropertyValue.ToString());
                                     string filename = System.IO.Path.GetFileName(uri.LocalPath);
