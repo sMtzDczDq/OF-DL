@@ -129,8 +129,8 @@ namespace OF_DL.Helpers
                             var str = propertyValue.ToString();
                             str = HttpUtility.HtmlDecode(str);
                             str = regex.Replace(str, String.Empty);
-                            if (str.Length > 100) // todo: add length limit to config
-                                str = str.Substring(0, 100).TrimEnd();
+                            if (str.Length > 50) // todo: add length limit to config
+                                str = str.Substring(0, 50).TrimEnd();
                             values.Add(propertyName, str);
                         }
                     }
