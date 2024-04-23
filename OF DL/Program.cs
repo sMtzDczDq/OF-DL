@@ -164,7 +164,11 @@ public class Program
             Entities.User validate = await m_ApiHelper.GetUserInfo($"/users/me", Auth);
             if (validate.name == null && validate.username == null)
             {
-                AnsiConsole.Markup($"[red]Auth failed, please check the values in auth.json are correct, press any key to exit[/]");
+                AnsiConsole.MarkupLine($"[red]Auth failed, please check the values in auth.json are correct.[/]\n");
+                AnsiConsole.MarkupLine($"[red]If you have previously been able to auth successfully, the most likely cause of this is that your browser has updated, which will change the values of the USER_AGENT string. The version change to this string is usually very minor and easy to overlook, but even a slight difference will cause an authentication failure.[/]\n");
+                AnsiConsole.MarkupLine($"[red]If you are struggling to authenticate, you may want to try the browser extension which is documented here:[/]\n");
+                AnsiConsole.MarkupLine($"[link]https://of-dl.gitbook.io/of-dl/auth#browser-extension[/]\n");
+                AnsiConsole.Markup($"[red]Press any key to exit[/]");
                 Log.Error("Auth failed");
                 Console.ReadKey();
                 return;
@@ -216,10 +220,27 @@ public class Program
             await m_DBHelper.CreateUsersDB(users);
             Dictionary<string, int> lists = await m_ApiHelper.GetLists("/lists", Auth);
             Dictionary<string, int> selectedUsers = new();
-            KeyValuePair<bool, Dictionary<string, int>> hasSelectedUsersKVP =
-                Config.NonInteractiveMode
-                    ? new KeyValuePair<bool, Dictionary<string, int>>(true, users)
-                    : await HandleUserSelection(selectedUsers, users, lists);
+            KeyValuePair<bool, Dictionary<string, int>> hasSelectedUsersKVP;
+            if (Config.NonInteractiveMode && string.IsNullOrEmpty(Config.NonInteractiveModeListName))
+            {
+                hasSelectedUsersKVP = new KeyValuePair<bool, Dictionary<string, int>>(true, users);
+            }
+            else if (Config.NonInteractiveMode && !string.IsNullOrEmpty(Config.NonInteractiveModeListName))
+            {
+                List<string> listUsernames = new();
+                int listId = lists[Config.NonInteractiveModeListName];
+                List<string> usernames = await m_ApiHelper.GetListUsers($"/lists/{listId}/users", Auth);
+                foreach (string user in usernames)
+                {
+                    listUsernames.Add(user);
+                }
+                selectedUsers = users.Where(x => listUsernames.Contains($"{x.Key}")).Distinct().ToDictionary(x => x.Key, x => x.Value);
+                hasSelectedUsersKVP = new KeyValuePair<bool, Dictionary<string, int>>(true, selectedUsers);
+            }
+            else
+            {
+                hasSelectedUsersKVP = await HandleUserSelection(selectedUsers, users, lists);
+            }
 
             if (hasSelectedUsersKVP.Key && hasSelectedUsersKVP.Value != null && hasSelectedUsersKVP.Value.ContainsKey("SinglePost"))
             {
@@ -1523,6 +1544,7 @@ public class Program
                             CustomDate = Config.CustomDate,
                             Timeout = Config.Timeout,
                             FFmpegPath = Config.FFmpegPath,
+                            NonInteractiveModeListName = Config.NonInteractiveModeListName,
                             DownloadAvatarHeaderPhoto = configOptions.Contains("[red]DownloadAvatarHeaderPhoto[/]"),
                             DownloadPaidPosts = configOptions.Contains("[red]DownloadPaidPosts[/]"),
                             DownloadPosts = configOptions.Contains("[red]DownloadPosts[/]"),
