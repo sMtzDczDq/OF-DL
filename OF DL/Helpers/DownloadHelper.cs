@@ -1125,6 +1125,12 @@ public class DownloadHelper : IDownloadHelper
             }
             return false;
         }
+        catch (PathTooLongException ex)
+        {
+            Console.WriteLine("Path too long exception, error on url: {0}\n Exception info: {1}", url, ex.StackTrace);
+            Log.Error("Path too long exception, error on url: {0}\n Exception info: {1}", url, ex.StackTrace);
+            throw new PathTooLongException($"Path too long exception, error on url: {url}\n Exception info: {ex.StackTrace}");
+        }
         catch (Exception ex)
         {
             Console.WriteLine("Exception caught: {0}\n\nStackTrace: {1}", ex.Message, ex.StackTrace);
