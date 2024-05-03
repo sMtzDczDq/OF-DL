@@ -1,4 +1,10 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using static OF_DL.Entities.Messages.Messages;
 
 namespace OF_DL.Entities.Purchased
 {
@@ -30,6 +36,11 @@ namespace OF_DL.Entities.Purchased
         }
 
         public class FromUser
+        {
+            public int id { get; set; }
+            public string _view { get; set; }
+        }
+        public class Author
         {
             public int id { get; set; }
             public string _view { get; set; }
@@ -71,6 +82,7 @@ namespace OF_DL.Entities.Purchased
             public bool? isCouplePeopleMedia { get; set; }
             public object queueId { get; set; }
             public FromUser fromUser { get; set; }
+            public Author author { get; set; }
             public bool? isFromQueue { get; set; }
             public bool? canUnsendQueue { get; set; }
             public int? unsendSecondsQueue { get; set; }

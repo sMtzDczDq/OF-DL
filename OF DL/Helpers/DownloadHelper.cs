@@ -139,6 +139,7 @@ public class DownloadHelper : IDownloadHelper
                                                              object? postInfo,
                                                              object? postMedia,
                                                              object? author,
+                                                             string username,
                                                              Dictionary<string, int> users,
                                                              IFileNameHelper fileNameHelper,
                                                              CustomFileNameOption option)
@@ -158,7 +159,7 @@ public class DownloadHelper : IDownloadHelper
         MatchCollection matches = Regex.Matches(filenameFormat, pattern);
         properties.AddRange(matches.Select(match => match.Groups[1].Value));
 
-        Dictionary<string, string> values = await fileNameHelper.GetFilename(postInfo, postMedia, author, properties, users);
+        Dictionary<string, string> values = await fileNameHelper.GetFilename(postInfo, postMedia, author, properties, username, users);
         return await fileNameHelper.BuildFilename(filenameFormat, values);
     }
 
@@ -642,7 +643,7 @@ public class DownloadHelper : IDownloadHelper
 
         Uri uri = new(url);
         string filename = System.IO.Path.GetFileNameWithoutExtension(uri.LocalPath);
-        string resolvedFilename = await GenerateCustomFileName(filename, filenameFormat, postInfo, postMedia, author, users, _FileNameHelper, CustomFileNameOption.ReturnOriginal);
+        string resolvedFilename = await GenerateCustomFileName(filename, filenameFormat, postInfo, postMedia, author, folder.Split("/")[^1], users, _FileNameHelper, CustomFileNameOption.ReturnOriginal);
 
         return await CreateDirectoriesAndDownloadMedia(path, url, folder, media_id, task, filename, resolvedFilename, config, showScrapeSize);
     }
@@ -660,7 +661,7 @@ public class DownloadHelper : IDownloadHelper
 
         Uri uri = new(url);
         string filename = System.IO.Path.GetFileNameWithoutExtension(uri.LocalPath);
-        string resolvedFilename = await GenerateCustomFileName(filename, filenameFormat, postInfo, postMedia, author, users, _FileNameHelper, CustomFileNameOption.ReturnOriginal);
+        string resolvedFilename = await GenerateCustomFileName(filename, filenameFormat, postInfo, postMedia, author, folder.Split("/")[^1], users, _FileNameHelper, CustomFileNameOption.ReturnOriginal);
 
         return await CreateDirectoriesAndDownloadMedia(path, url, folder, media_id, task, filename, resolvedFilename, config, showScrapeSize);
     }
@@ -678,7 +679,7 @@ public class DownloadHelper : IDownloadHelper
 
         Uri uri = new(url);
         string filename = System.IO.Path.GetFileNameWithoutExtension(uri.LocalPath);
-        string resolvedFilename = await GenerateCustomFileName(filename, filenameFormat, streamInfo, streamMedia, author, users, _FileNameHelper, CustomFileNameOption.ReturnOriginal);
+        string resolvedFilename = await GenerateCustomFileName(filename, filenameFormat, streamInfo, streamMedia, author, folder.Split("/")[^1], users, _FileNameHelper, CustomFileNameOption.ReturnOriginal);
 
         return await CreateDirectoriesAndDownloadMedia(path, url, folder, media_id, task, filename, resolvedFilename, config, showScrapeSize);
     }
@@ -697,7 +698,7 @@ public class DownloadHelper : IDownloadHelper
         }
         Uri uri = new(url);
         string filename = System.IO.Path.GetFileNameWithoutExtension(uri.LocalPath);
-        string resolvedFilename = await GenerateCustomFileName(filename, filenameFormat, messageInfo, messageMedia, fromUser, users, _FileNameHelper, CustomFileNameOption.ReturnOriginal);
+        string resolvedFilename = await GenerateCustomFileName(filename, filenameFormat, messageInfo, messageMedia, fromUser, folder.Split("/")[^1], users, _FileNameHelper, CustomFileNameOption.ReturnOriginal);
         return await CreateDirectoriesAndDownloadMedia(path, url, folder, media_id, task, filename, resolvedFilename, config, showScrapeSize);
     }
 
@@ -707,7 +708,7 @@ public class DownloadHelper : IDownloadHelper
         string path = "/Archived/Posts/Free";
         Uri uri = new(url);
         string filename = System.IO.Path.GetFileNameWithoutExtension(uri.LocalPath);
-        string resolvedFilename = await GenerateCustomFileName(filename, filenameFormat, messageInfo, messageMedia, author, users, _FileNameHelper, CustomFileNameOption.ReturnOriginal);
+        string resolvedFilename = await GenerateCustomFileName(filename, filenameFormat, messageInfo, messageMedia, author, folder.Split("/")[^1], users, _FileNameHelper, CustomFileNameOption.ReturnOriginal);
         return await CreateDirectoriesAndDownloadMedia(path, url, folder, media_id, task, filename, resolvedFilename, config, showScrapeSize);
     }
 
@@ -734,7 +735,7 @@ public class DownloadHelper : IDownloadHelper
         }
         Uri uri = new(url);
         string filename = System.IO.Path.GetFileNameWithoutExtension(uri.LocalPath);
-        string resolvedFilename = await GenerateCustomFileName(filename, filenameFormat, messageInfo, messageMedia, fromUser, users, _FileNameHelper, CustomFileNameOption.ReturnOriginal);
+        string resolvedFilename = await GenerateCustomFileName(filename, filenameFormat, messageInfo, messageMedia, fromUser, folder.Split("/")[^1], users, _FileNameHelper, CustomFileNameOption.ReturnOriginal);
         return await CreateDirectoriesAndDownloadMedia(path, url, folder, media_id, task, filename, resolvedFilename, config, showScrapeSize);
     }
 
@@ -761,7 +762,7 @@ public class DownloadHelper : IDownloadHelper
         }
         Uri uri = new(url);
         string filename = System.IO.Path.GetFileNameWithoutExtension(uri.LocalPath);
-        string resolvedFilename = await GenerateCustomFileName(filename, filenameFormat, messageInfo, messageMedia, fromUser, users, _FileNameHelper, CustomFileNameOption.ReturnOriginal);
+        string resolvedFilename = await GenerateCustomFileName(filename, filenameFormat, messageInfo, messageMedia, fromUser, folder.Split("/")[^1], users, _FileNameHelper, CustomFileNameOption.ReturnOriginal);
         return await CreateDirectoriesAndDownloadMedia(path, url, folder, media_id, task, filename, resolvedFilename, config, showScrapeSize);
     }
 
@@ -909,7 +910,7 @@ public class DownloadHelper : IDownloadHelper
                 {
                     properties.Add(match.Groups[1].Value);
                 }
-                Dictionary<string, string> values = await _FileNameHelper.GetFilename(messageInfo, messageMedia, fromUser, properties, users);
+                Dictionary<string, string> values = await _FileNameHelper.GetFilename(messageInfo, messageMedia, fromUser, properties, folder.Split("/")[^1],users);
                 customFileName = await _FileNameHelper.BuildFilename(filenameFormat, values);
             }
 
@@ -992,7 +993,7 @@ public class DownloadHelper : IDownloadHelper
                 {
                     properties.Add(match.Groups[1].Value);
                 }
-                Dictionary<string, string> values = await _FileNameHelper.GetFilename(messageInfo, messageMedia, fromUser, properties, users);
+                Dictionary<string, string> values = await _FileNameHelper.GetFilename(messageInfo, messageMedia, fromUser, properties, folder.Split("/")[^1], users);
                 customFileName = await _FileNameHelper.BuildFilename(filenameFormat, values);
             }
 
@@ -1075,7 +1076,7 @@ public class DownloadHelper : IDownloadHelper
                 {
                     properties.Add(match.Groups[1].Value);
                 }
-                Dictionary<string, string> values = await _FileNameHelper.GetFilename(postInfo, postMedia, author, properties, users);
+                Dictionary<string, string> values = await _FileNameHelper.GetFilename(postInfo, postMedia, author, properties, folder.Split("/")[^1], users);
                 customFileName = await _FileNameHelper.BuildFilename(filenameFormat, values);
             }
 
@@ -1156,7 +1157,7 @@ public class DownloadHelper : IDownloadHelper
                 {
                     properties.Add(match.Groups[1].Value);
                 }
-                Dictionary<string, string> values = await _FileNameHelper.GetFilename(postInfo, postMedia, author, properties, users);
+                Dictionary<string, string> values = await _FileNameHelper.GetFilename(postInfo, postMedia, author, properties, folder.Split("/")[^1], users);
                 customFileName = await _FileNameHelper.BuildFilename(filenameFormat, values);
             }
 
@@ -1237,7 +1238,7 @@ public class DownloadHelper : IDownloadHelper
                 {
                     properties.Add(match.Groups[1].Value);
                 }
-                Dictionary<string, string> values = await _FileNameHelper.GetFilename(streamInfo, streamMedia, author, properties, users);
+                Dictionary<string, string> values = await _FileNameHelper.GetFilename(streamInfo, streamMedia, author, properties, folder.Split("/")[^1], users);
                 customFileName = await _FileNameHelper.BuildFilename(filenameFormat, values);
             }
 
@@ -1320,7 +1321,7 @@ public class DownloadHelper : IDownloadHelper
                 {
                     properties.Add(match.Groups[1].Value);
                 }
-                Dictionary<string, string> values = await _FileNameHelper.GetFilename(postInfo, postMedia, fromUser, properties, users);
+                Dictionary<string, string> values = await _FileNameHelper.GetFilename(postInfo, postMedia, fromUser, properties, folder.Split("/")[^1], users);
                 customFileName = await _FileNameHelper.BuildFilename(filenameFormat, values);
             }
 
@@ -1395,7 +1396,7 @@ public class DownloadHelper : IDownloadHelper
                 {
                     properties.Add(match.Groups[1].Value);
                 }
-                Dictionary<string, string> values = await _FileNameHelper.GetFilename(postInfo, postMedia, author, properties, users);
+                Dictionary<string, string> values = await _FileNameHelper.GetFilename(postInfo, postMedia, author, properties, folder.Split("/")[^1], users);
                 customFileName = await _FileNameHelper.BuildFilename(filenameFormat, values);
             }
 

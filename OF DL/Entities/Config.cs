@@ -19,6 +19,7 @@ namespace OF_DL.Entities
         public bool DownloadVideos { get; set; }
         public bool DownloadAudios { get; set; }
         public bool IncludeExpiredSubscriptions { get; set; }
+        public bool IncludeRestrictedSubscriptions { get; set; }
         public bool SkipAds { get; set; } = false;
         public string? DownloadPath { get; set; } = string.Empty;
         public string? PaidPostFileNameFormat { get; set; } = string.Empty;
@@ -49,6 +50,9 @@ namespace OF_DL.Entities
 
         public bool DownloadPostsIncrementally { get; set; } = false;
         public bool NonInteractiveMode { get; set; } = false;
+
+        public string NonInteractiveModeListName { get; set; } = string.Empty;
+        public bool NonInteractiveModePurchasedTab { get; set; } = false;
         public string? FFmpegPath { get; set; } = string.Empty;
     }
 
