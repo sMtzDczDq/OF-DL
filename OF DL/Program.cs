@@ -34,7 +34,7 @@ public class Program
         m_DownloadHelper = new DownloadHelper();
     }
 
-    public async static Task Main()
+    public async static Task Main(string[] args)
     {
         try
         {
@@ -46,32 +46,94 @@ public class Program
 
             AnsiConsole.Write(new FigletText("Welcome to OF-DL").Color(Color.Red));
 
+            var os = Environment.OSVersion;
+            if (os.Platform == PlatformID.Win32NT)
+            {
+                // check if this is windows 10+
+                if (os.Version.Major < 10)
+                {
+                    Console.Write("This appears to be running on an older version of Windows which is not supported.\n\n");
+                    Console.Write("OF-DL requires Windows 10 or higher when being run on Windows. Your reported version is: {0}\n\n", os.VersionString);
+                    Console.Write("Press any key to continue.\n");
+                    Log.Error("Windows version prior to 10.x: {0}", os.VersionString);
+                    if (!Config.NonInteractiveMode)
+                    {
+                        Console.ReadKey();
+                        Environment.Exit(1);
+                    }
+                }
+                else
+                {
+                    AnsiConsole.Markup("[green]Valid version of Windows found.\n[/]");
+                }
+            }
+
             if (File.Exists("auth.json"))
             {
                 AnsiConsole.Markup("[green]auth.json located successfully!\n[/]");
-                Auth = JsonConvert.DeserializeObject<Auth>(File.ReadAllText("auth.json"));
+                try
+                {
+                    Auth = JsonConvert.DeserializeObject<Auth>(File.ReadAllText("auth.json"));
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                    AnsiConsole.MarkupLine($"\n[red]auth.json is not valid, check your JSON syntax![/]\n");
+                    AnsiConsole.MarkupLine($"[red]If you are struggling with this file, you may want to try the browser extension which is documented here:[/]\n");
+                    AnsiConsole.MarkupLine($"[link]https://of-dl.gitbook.io/of-dl/auth#browser-extension[/]\n");
+                    AnsiConsole.MarkupLine($"[red]Press any key to exit.[/]");
+                    Log.Error("auth.json processing failed.");
+                    if (!Config.NonInteractiveMode)
+                    {
+                        Console.ReadKey();
+                        Environment.Exit(2);
+                    }
+                }
             }
             else
             {
                 File.WriteAllText("auth.json", JsonConvert.SerializeObject(new Auth()));
                 AnsiConsole.Markup("[red]auth.json does not exist, a default file has been created in the folder you are running the program from[/]");
                 Log.Error("auth.json does not exist");
-                Console.ReadKey();
-                Environment.Exit(0);
+                if (!Config.NonInteractiveMode)
+                {
+                    Console.ReadKey();
+                    Environment.Exit(2);
+                }
             }
 
             if (File.Exists("config.json"))
             {
                 AnsiConsole.Markup("[green]config.json located successfully!\n[/]");
-                Config = JsonConvert.DeserializeObject<Config>(File.ReadAllText("config.json"));
+                try
+                {
+                    Config = JsonConvert.DeserializeObject<Config>(File.ReadAllText("config.json"));
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                    AnsiConsole.MarkupLine($"\n[red]config.json is not valid, check your JSON syntax![/]\n");
+                    AnsiConsole.MarkupLine($"[red]If you are struggling to get the JSON syntax correct, it is safe to paste this file's contents into a JSON validator like the one located here:[/]\n");
+                    AnsiConsole.MarkupLine($"[link]https://jsonlint.com/[/]\n");
+                    AnsiConsole.MarkupLine($"[red]Press any key to exit.[/]");
+                    Log.Error("config.json processing failed.");
+                    if (!Config.NonInteractiveMode)
+                    {
+                        Console.ReadKey();
+                        Environment.Exit(3);
+                    }
+                }
             }
             else
             {
                 File.WriteAllText("config.json", JsonConvert.SerializeObject(new Config()));
                 AnsiConsole.Markup("[red]config.json does not exist, a default file has been created in the folder you are running the program from[/]");
                 Log.Error("config.json does not exist");
-                Console.ReadKey();
-                Environment.Exit(0);
+                if (!Config.NonInteractiveMode)
+                {
+                    Console.ReadKey();
+                    Environment.Exit(3);
+                }
             }
 
             var ffmpegFound = false;
@@ -133,8 +195,11 @@ public class Program
             {
                 AnsiConsole.Markup("[red]Cannot locate FFmpeg; please modify config.json with the correct path. Press any key to exit.[/]");
                 Log.Error($"Cannot locate FFmpeg with path: {Config.FFmpegPath}");
-                Console.ReadKey();
-                Environment.Exit(0);
+                if (!Config.NonInteractiveMode)
+                {
+                    Console.ReadKey();
+                    Environment.Exit(4);
+                }
             }
 
             if (!File.Exists("cdm/devices/chrome_1610/device_client_id_blob"))
@@ -174,6 +239,13 @@ public class Program
                 return;
             }
 
+            if (args is not null && args.Length > 0)
+            {
+                const string NON_INTERACTIVE_ARG = "--non-interactive";
+
+                if (args.Any(a => NON_INTERACTIVE_ARG.Equals(NON_INTERACTIVE_ARG, StringComparison.OrdinalIgnoreCase)))
+                    Config.NonInteractiveMode = true;
+            }
 
             AnsiConsole.Markup($"[green]Logged In successfully as {validate.name} {validate.username}\n[/]");
             await DownloadAllData();
@@ -187,6 +259,12 @@ public class Program
                 Console.WriteLine("\nInner Exception:");
                 Console.WriteLine("Exception caught: {0}\n\nStackTrace: {1}", ex.InnerException.Message, ex.InnerException.StackTrace);
                 Log.Error("Inner Exception: {0}\n\nStackTrace: {1}", ex.InnerException.Message, ex.InnerException.StackTrace);
+            }
+            Console.WriteLine("\nPress any key to exit.");
+            if (!Config.NonInteractiveMode)
+            {
+                Console.ReadKey();
+                Environment.Exit(5);
             }
         }
     }
